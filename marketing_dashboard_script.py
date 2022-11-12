@@ -3,19 +3,16 @@ import pandas as pd
 import re
 import sqlite3
 
-# what to modify in this script
-# columns name is fixed, if it change --> rename columns
-
 # import data from csv file
 df1 = pd.read_csv('sample.csv')
 
 # pre-processing
 df1.drop(columns=['Sticker taps', 'Content type', 'Replies', 'Results', 'Cost per result'], inplace=True)
 # df1['Post time'] = pd.to_datetime(df1['Post time'])
-df1 = df1.loc[df1['Caption'] != 'Skooldio updated their cover photo.'].reset_index(drop=True)
+df1 = df1.loc[df1['Caption'] != '***** updated their cover photo.'].reset_index(drop=True)
 df1.insert(loc=0, column='postID', value=range(1, len(df1) + 1))
 df1 = df1.reset_index(drop=True)
-df1['postID'] = df1['postID'].astype(str) # ERROR
+df1['postID'] = df1['postID'].astype(str)
 
 # create a DataFrame for each table in a database file
 dict_df2 = {'tagID':[], 'campaigns':[]}
@@ -29,9 +26,9 @@ pattern = re.compile('#[a-zA-Z0-9]+[\w$]') # indicate REGEX for retrieve tags
 # Extract tags for each post into a new table
 for index, row in df1.iterrows(): # find tags for each post (each row)
     result = pattern.findall(df1['Caption'][index]) # get tags from a comment column and get into a list
-    lower_result = [e.lower() for e in result] # lowering case tags for make it consistent
-    lower_result_remove_duplicate = list(set(lower_result)) # remove duplicate tags for each post
-    if len(lower_result_remove_duplicate) != 0: # if post contain any tag
+    lower_result = [e.lower() for e in result] # lowering case tags to make it consistent
+    lower_result_remove_duplicate = list(set(lower_result)) # remove duplicated tags for each post
+    if len(lower_result_remove_duplicate) != 0: # if post contains any tag
         # lower_result is a list containing tags for each post; [#tag1, #tag2, #tag3, ...]
         for e in lower_result_remove_duplicate: # for each tag in a post
             if e not in dict_df2['campaigns']: # if tag is not in record before, record it as a new one
@@ -53,7 +50,7 @@ df2 = pd.DataFrame(dict_df2)
 df3 = pd.DataFrame(dict_df3)
 
 # export as a database file
-connection = sqlite3.connect('skooldio-sample.db')
+connection = sqlite3.connect('sample.db')
 # define a function for query execution
 def execute_query(connection, query):
     cursor = connection.cursor()
@@ -73,7 +70,7 @@ def insert_row(connection, query, row):
     except OSError as err:
         print(f"Error: '{err}'")
 
-# the database will consist of 5 tables; posts, postAndTags, campaigns ,courses, transaction
+# the database will consist of 3 tables; posts, postAndTags, campaigns
 # create tables in database
 query1_1 = '''
 CREATE TABLE IF NOT EXISTS posts (
